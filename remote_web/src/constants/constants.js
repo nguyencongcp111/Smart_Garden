@@ -1,11 +1,10 @@
 // src/constants/constants.js
 
 export const API_CONFIG = {
-  WEATHER_API_KEY: import.meta.env.VITE_WEATHER_API_KEY || '${VITE_WEATHER_API_KEY}',
-  WEATHER_BASE_URL: 'https://api.openweathermap.org/data/2.5',
-  GEMINI_API_URL: '/api/gemini/v1/models',
+  WEATHER_BASE_URL: '/api/weather',
+  // Full model collection path; chatService appends /<model>:generateContent.
+  GEMINI_API_URL: '/api/gemini/v1beta/models',
   GEMINI_MODEL: 'gemini-2.5-flash',
-  GEMINI_API_KEY: import.meta.env.VITE_GEMINI_API_KEY || '${VITE_GEMINI_API_KEY}',
 };
 
 export const WEATHER_UNITS = {

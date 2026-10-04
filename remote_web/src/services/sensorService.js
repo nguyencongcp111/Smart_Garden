@@ -6,13 +6,14 @@
 // hostname mDNS như smartgarden.local) và xác nhận nó có phản hồi đúng endpoint
 // /status hay không — giống một health-check hơn là quét mạng thật sự.
 //
-// Chỉ hoạt động khi web app và ESP32 chạy trên http:// cùng mạng LAN (vd:
-// npm run dev ở http://localhost:5173). Nếu sau này deploy web app lên
-// Vercel (https://), trình duyệt sẽ CHẶN fetch tới http://192.168.x.x vì lý do
-// mixed-content — khi đó cần đổi sang mô hình ESP32 đẩy dữ liệu lên một API
-// công khai (cloud) thay vì web kéo trực tiếp từ ESP32.
+// String target giữ kết nối LAN cũ; { deviceId, token } dùng API cloud.
+// HTTPS Production dùng cloud để không phụ thuộc LAN / mixed content.
 
 import { SENSOR_CONFIG } from '../constants/constants';
+import { normalizeAutoConfig } from '../utils/irrigationConfig';
+import { cloudStatus, cloudReadings, cloudCommand } from './cloudDeviceService';
+
+const isCloud = (target) => target && typeof target === 'object';
 
 const normalizeHost = (host) => {
   let h = host.trim();
@@ -44,6 +45,8 @@ const fetchWithTimeout = async (url, timeoutMs = SENSOR_CONFIG.REQUEST_TIMEOUT_M
 
 // "Phát hiện" cảm biến: gọi /status, coi là tìm thấy nếu phản hồi hợp lệ
 export const detectSensor = async (host) => {
+  if (isCloud(host)) return cloudStatus(host);
+  if (typeof location !== 'undefined' && location.protocol === 'https:') throw new Error('Hãy chọn kết nối Internet bằng ID thiết bị khi dùng website HTTPS.');
   const baseUrl = buildSensorBaseUrl(host);
   const response = await fetchWithTimeout(`${baseUrl}${SENSOR_CONFIG.STATUS_ENDPOINT}`);
 
@@ -60,6 +63,7 @@ export const detectSensor = async (host) => {
 };
 
 export const fetchSensorReadings = async (host) => {
+  if (isCloud(host)) return cloudReadings(host);
   const baseUrl = buildSensorBaseUrl(host);
   const response = await fetchWithTimeout(`${baseUrl}${SENSOR_CONFIG.SENSORS_ENDPOINT}`);
 
@@ -74,6 +78,11 @@ export const fetchSensorReadings = async (host) => {
 // durationSec (tùy chọn, chỉ áp dụng khi turnOn=true): tự tắt sau số giây này.
 // Không truyền -> chạy không giới hạn (vẫn bị chặn bởi giới hạn an toàn 10 phút trên ESP32).
 export const setRelayState = async (host, turnOn, durationSec) => {
+  if (isCloud(host)) {
+    const result = await cloudCommand(host, { type: 'relay', on: turnOn, durationSec: turnOn ? durationSec : 0 });
+    if (result.relay !== (turnOn ? 'on' : 'off')) throw new Error('ESP32 chưa xác nhận đúng trạng thái bơm yêu cầu.');
+    return result;
+  }
   const baseUrl = buildSensorBaseUrl(host);
   let url = `${baseUrl}${SENSOR_CONFIG.RELAY_ENDPOINT}?state=${turnOn ? 'on' : 'off'}`;
   if (turnOn && durationSec) {
@@ -91,7 +100,13 @@ export const setRelayState = async (host, turnOn, durationSec) => {
 
 // Cấu hình chế độ tưới tự động: enabled, startPercent (độ ẩm bật tưới),
 // stopPercent (độ ẩm tắt tưới), durationSec (thời gian tưới tối đa, tính bằng giây)
-export const setAutoConfig = async (host, { enabled, startPercent, stopPercent, durationSec }) => {
+export const setAutoConfig = async (host, config) => {
+  const { enabled, startPercent, stopPercent, durationSec } = normalizeAutoConfig(config);
+  if (isCloud(host)) {
+    const result = await cloudCommand(host, { type: 'auto', config: { enabled, startPercent, stopPercent, durationSec } });
+    if (result.auto_enabled !== enabled || result.auto_start_percent !== startPercent || result.auto_stop_percent !== stopPercent || result.auto_duration_sec !== durationSec) throw new Error('ESP32 chưa xác nhận đúng cấu hình yêu cầu.');
+    return result;
+  }
   const baseUrl = buildSensorBaseUrl(host);
   const params = new URLSearchParams({
     enabled: enabled ? '1' : '0',
@@ -105,5 +120,9 @@ export const setAutoConfig = async (host, { enabled, startPercent, stopPercent, 
     throw new Error(`Không lưu được cấu hình tự động (HTTP ${response.status})`);
   }
 
-  return response.json();
+  const result = await response.json();
+  if (result.auto_enabled !== enabled || result.auto_start_percent !== startPercent || result.auto_stop_percent !== stopPercent || result.auto_duration_sec !== durationSec) {
+    throw new Error('ESP32 chưa xác nhận đúng cấu hình yêu cầu. Hãy kiểm tra cấu hình hiện tại trước khi thử lại.');
+  }
+  return result;
 };

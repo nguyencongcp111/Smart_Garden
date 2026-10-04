@@ -74,6 +74,13 @@ typings/
 .env.test
 .env.production
 .env.local
+.env.*
+!.env.example
+.vercel/
+firmware/**/arduino_secret.h
+firmware/**/cloud_config.h
+firmware/**/build/
+cloud-credentials.json
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache

@@ -1,107 +1,62 @@
-// src/App.jsx
-
 import React, { useState } from 'react';
-import Header from './components/Header';
-import WeatherAlerts from './components/WeatherAlerts';
-import CurrentWeather from './components/CurrentWeather';
-import ForecastList from './components/ForecastList';
-import Chatbot from './components/Chatbot';
-import DataManager from './components/DataManager';
+import { Sprout, ArrowUpRight } from 'lucide-react';
+import WeatherPanel from './components/WeatherPanel';
 import SensorPanel from './components/SensorPanel';
+import Chatbot from './components/Chatbot';
+import BotanicalBackground from './components/BotanicalBackground';
 import { useWeather } from './hooks/useWeather';
-import { useFarmData } from './hooks/useFarmData';
-import { useChat } from './hooks/useChat';
 import { useSensor } from './hooks/useSensor';
+import { useChat } from './hooks/useChat';
 
-const App = () => {
-  const [showDataManager, setShowDataManager] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
-
-  // Weather hook
-  const { weather, forecast, alerts, loading, error, searchWeather } = useWeather();
-
-  // Sensor hook (ESP32: soil moisture + DHT11)
+export default function App() {
+  const weather = useWeather();
   const sensor = useSensor();
+  const [plantName, setPlantName] = useState('');
+  const [chatOpen, setChatOpen] = useState(false);
+  const [reviewDraft, setReviewDraft] = useState(null);
+  const contextKey = `${sensor.sessionId}|${sensor.activeHost}|${plantName.trim()}`;
+  const chat = useChat({ weather: weather.weather, readings: sensor.status === 'connected' ? sensor.readings : null, plantName, contextKey });
 
-  // Farm data hook
-  const {
-    farmData,
-    handleFileUpload,
-    handleDownloadJSON,
-    handleDownloadCSV,
-    addCrop,
-    addActivity,
-    deleteItem,
-    clearAll
-  } = useFarmData(weather);
-
-  // Chat hook
-  const {
-    messages,
-    inputMessage,
-    setInputMessage,
-    loading: chatLoading,
-    sendMessage,
-    chatEndRef
-  } = useChat(weather);
+  const handleRecommendation = async (message, action) => {
+    if (action === 'rejected') {
+      chat.updateRecommendation(message.id, { decision: 'rejected' });
+      return;
+    }
+    if (message.contextKey !== contextKey || sensor.status !== 'connected' || sensor.autoSaving) return;
+    if (action === 'reviewed') {
+      setReviewDraft({ id: message.id, config: message.recommendation, sessionId: sensor.sessionId });
+      chat.updateRecommendation(message.id, { decision: 'reviewed' });
+      setChatOpen(false);
+      return;
+    }
+    chat.updateRecommendation(message.id, { decision: 'saving', actionError: null });
+    try {
+      await sensor.updateAutoConfig(message.recommendation);
+      setReviewDraft(null);
+      chat.updateRecommendation(message.id, { decision: 'applied' });
+    } catch (error) {
+      chat.updateRecommendation(message.id, { decision: null, actionError: error.message });
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Header with Search */}
-        <Header 
-          onSearch={searchWeather}
-          onToggleDataManager={() => setShowDataManager(!showDataManager)}
-          loading={loading}
-        />
-
-        {/* Error Message */}
-        {error && (
-          <div className="bg-red-50 border-2 border-red-500 rounded-xl p-4 mb-6">
-            <p className="text-red-700 font-semibold">❌ {error}</p>
+    <div className="garden-app">
+      <BotanicalBackground />
+      <div className="garden-shell">
+        <header className="garden-header">
+          <a href="./" className="brand" aria-label="Smart Garden — trang chủ"><span className="brand-icon"><Sprout size={26} /></span><span>smart<span className="brand-light">garden</span><small>CHĂM CÂY, THẬT THẢNH THƠI.</small></span></a>
+          <span className="header-note">Một góc xanh. Vạn điều an lành.<ArrowUpRight size={16} /></span>
+        </header>
+        <main>
+          <div className="page-intro"><p className="eyebrow">YOUR EVERYDAY GARDEN</p><h1>Khu vườn trong tầm tay<span>.</span></h1><p>Theo dõi thời tiết, lắng nghe cây và chăm sóc khu vườn của bạn.</p></div>
+          <div className="garden-grid">
+            <WeatherPanel {...weather} />
+            <SensorPanel sensor={sensor} weather={weather.weather} alerts={weather.alerts} plantName={plantName} onPlantNameChange={setPlantName} reviewDraft={reviewDraft} onAskAssistant={() => { setChatOpen(true); chat.sendMessage('Hãy gợi ý các chỉ số tưới tự động dựa trên cảm biến hiện tại và tên cây của tôi.'); }} />
           </div>
-        )}
-
-        {/* Data Manager */}
-        <DataManager 
-          isOpen={showDataManager}
-          onClose={() => setShowDataManager(false)}
-          farmData={farmData}
-          onFileUpload={handleFileUpload}
-          onDownloadJSON={handleDownloadJSON}
-          onDownloadCSV={handleDownloadCSV}
-          onAddCrop={addCrop}
-          onAddActivity={addActivity}
-          onDeleteItem={deleteItem}
-          onClearAll={clearAll}
-        />
-
-        {/* Weather Alerts */}
-        <WeatherAlerts alerts={alerts} />
-
-        {/* Sensor Panel (ESP32: soil moisture + DHT11, đối chiếu với OpenWeather) */}
-        <SensorPanel sensor={sensor} weather={weather} />
-
-        {/* Current Weather */}
-        <CurrentWeather weather={weather} />
-
-        {/* Forecast */}
-        <ForecastList forecast={forecast} />
+        </main>
+        <footer className="garden-footer"><span><span className="tiny-dot" /> Gắn kết công nghệ với thiên nhiên</span><span>SMART GARDEN / ESP32</span></footer>
       </div>
-
-      {/* Chatbot */}
-      <Chatbot 
-        isOpen={chatOpen}
-        onToggle={() => setChatOpen(!chatOpen)}
-        messages={messages}
-        inputMessage={inputMessage}
-        onInputChange={setInputMessage}
-        onSend={sendMessage}
-        loading={chatLoading}
-        chatEndRef={chatEndRef}
-      />
+      <Chatbot isOpen={chatOpen} onToggle={() => setChatOpen(!chatOpen)} {...chat} onInputChange={chat.setInputMessage} onSend={chat.sendMessage} onRecommendation={handleRecommendation} contextKey={contextKey} connected={sensor.status === 'connected'} autoSaving={sensor.autoSaving} plantName={plantName} />
     </div>
   );
-};
-
-export default App;
+}

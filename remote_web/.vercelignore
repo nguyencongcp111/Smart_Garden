@@ -1,0 +1,10 @@
+.docx_work/
+*.docx
+*.pdf
+firmware/
+tests/
+scripts/
+cloud-credentials.json
+.env*
+test-gemini.js
+docs/cloud-preview.jpg

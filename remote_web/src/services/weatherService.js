@@ -1,6 +1,6 @@
 // src/services/weatherService.js
 
-import { API_CONFIG, WEATHER_UNITS } from '../constants/constants';
+import { API_CONFIG } from '../constants/constants';
 import { formatDate } from '../utils/dateFormatter';
 
 export const isSuccessfulWeatherResponse = (data, expectedCode = 200) => {
@@ -9,7 +9,7 @@ export const isSuccessfulWeatherResponse = (data, expectedCode = 200) => {
 
 const buildWeatherUrl = (endpoint, city) => {
   const encodedCity = encodeURIComponent(city.trim());
-  return `${API_CONFIG.WEATHER_BASE_URL}/${endpoint}?q=${encodedCity}&appid=${API_CONFIG.WEATHER_API_KEY}&units=${WEATHER_UNITS.METRIC}&lang=vi`;
+  return `${API_CONFIG.WEATHER_BASE_URL}?endpoint=${endpoint}&q=${encodedCity}`;
 };
 
 export const fetchCurrentWeather = async (city) => {
@@ -17,6 +17,8 @@ export const fetchCurrentWeather = async (city) => {
   
   const response = await fetch(url);
   if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    if (body?.error?.message) throw new Error(body.error.message);
     if (response.status === 401) {
       throw new Error('Khóa API thời tiết không hợp lệ');
     }
@@ -37,6 +39,8 @@ export const fetchForecast = async (city) => {
   
   const response = await fetch(url);
   if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    if (body?.error?.message) throw new Error(body.error.message);
     if (response.status === 401) {
       throw new Error('Khóa API thời tiết không hợp lệ');
     }

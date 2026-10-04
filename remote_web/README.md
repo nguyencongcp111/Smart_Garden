@@ -1,178 +1,63 @@
-# agri-weather-vnm
-# 🌾 Ứng dụng Thời tiết Nông nghiệp
+# Smart Garden · ESP32 + Vercel
 
-Ứng dụng dự báo thời tiết chuyên biệt cho canh tác, tích hợp AI chatbot và quản lý dữ liệu nông trại.
+Giao diện hai khu vực: thời tiết OpenWeather bên trái; cảm biến, bơm, cấu hình tưới và chatbot Gemini bên phải. Web hỗ trợ kết nối Internet bằng ID thiết bị và kết nối LAN bằng IP khi phát triển tại máy.
 
-## 🎯 Tính năng chính
+## Triển khai Internet
 
-### 1. **Dự báo Thời tiết**
-- Thời tiết hiện tại chi tiết
-- Dự báo 5 ngày
-- 10+ chỉ số quan trọng (nhiệt độ, độ ẩm, gió, mưa...)
+Đọc [hướng dẫn thiết lập Vercel, Upstash và ESP32](docs/VERCEL_SETUP.md). Các tệp cấu hình deploy đã có trong `vercel.json`; không cần đổi sang Next.js.
 
-### 2. **Hệ thống Cảnh báo Thông minh**
-- ⚠️ Cảnh báo BÃO
-- 🌧️ Cảnh báo MƯA LỚN
-- 🌡️ Cảnh báo NẮNG NÓNG
-- ❄️ Cảnh báo SƯƠNG GIÁ
-- 💧 Cảnh báo ĐỘ ẨM CAO
-- ✅ Thời tiết THUẬN LỢI
-
-### 3. **Chatbot AI Nông nghiệp**
-- Tư vấn canh tác dựa trên thời tiết
-- Lịch phun thuốc, bón phân
-- Phòng trừ sâu bệnh
-- Gợi ý cây trồng phù hợp
-
-### 4. **Quản lý Dữ liệu Nông trại**
-- Danh sách cây trồng
-- Nhật ký hoạt động canh tác
-- Ghi chú quan sát
-- Upload/Download file (JSON, CSV, TXT)
-- Lưu trữ lâu dài
-
----
-
-## 📁 Cấu trúc Project
-
-```
-src/
-├── components/          # Các React components
-│   ├── Header.jsx
-│   ├── WeatherAlerts.jsx
-│   ├── CurrentWeather.jsx
-│   ├── WeatherDetails.jsx
-│   ├── ForecastCard.jsx
-│   ├── ForecastList.jsx
-│   ├── Chatbot.jsx
-│   ├── DataManager.jsx
-│   ├── CropsList.jsx
-│   ├── ActivitiesList.jsx
-│   └── NotesList.jsx
-│
-├── hooks/               # Custom React hooks
-│   ├── useWeather.js
-│   ├── useFarmData.js
-│   └── useChat.js
-│
-├── services/            # API calls
-│   ├── weatherService.js
-│   ├── chatService.js
-│   └── storageService.js
-│
-├── utils/               # Helper functions
-│   ├── weatherAnalyzer.js
-│   ├── fileHandler.js
-│   └── dateFormatter.js
-│
-├── constants/           # Constants & configs
-│   └── constants.js
-│
-└── App.jsx             # Main component
+```text
+ESP32 tại vườn ── HTTPS ──► API Vercel ◄── HTTPS ── Web/điện thoại
+                               │
+                            Upstash Redis
+                               │
+                       Gemini / OpenWeather
 ```
 
----
+ESP32 chủ động đồng bộ mỗi 10 giây, gửi cảm biến và nhận lệnh. Redis lưu trạng thái gần nhất, một lệnh chờ và xác nhận. Website dùng ID như `garden-01` cùng mã truy cập web, không cần cùng Wi-Fi với ESP32. Các khóa Gemini/OpenWeather/Redis chỉ nằm trên máy chủ. Khóa nạp vào ESP32 khác với mã dùng trên website.
 
-## 🚀 Cài đặt
+## Phạm vi giữ nguyên
 
-### 1. Clone project
-```bash
-git clone <repository-url>
-cd agri-weather-app
-```
+- Đọc DHT11 GPIO4 và Soil Moisture GPIO34; relay GPIO26 active LOW.
+- Vòng đọc 2 giây, thuật toán tưới theo hai ngưỡng, tưới thủ công và giới hạn bơm 10 phút.
+- Kiểm tra ngưỡng 0–100%, start < stop, thời gian 1–600 giây.
+- Chatbot nhận số đo/tên cây và hiển thị ba lựa chọn **Áp dụng ngay / Tôi sẽ xem xét / Từ chối**. Chỉ báo đã lưu khi ESP32 xác nhận giá trị thực hiện.
+- Các endpoint LAN `/status`, `/sensors`, `/relay`, `/auto` được giữ trong firmware.
 
-### 2. Cài đặt dependencies
-```bash
+Bản firmware cloud hoàn chỉnh ở `firmware/smart_garden_cloud`. HTTPS chạy trong tác vụ riêng, trao đổi qua hàng đợi để không chặn vòng tưới gốc. Sketch gốc ở thư mục bên cạnh `smart_garden_phase3` được giữ nguyên. Khởi động lại về cấu hình mặc định theo thiết kế hiện tại.
+
+## Chạy tại máy
+
+```sh
 npm install
-```
-
-### 3. Cấu hình API Key (Tùy chọn)
-Mở file `src/constants/constants.js` và thay API key của bạn:
-```javascript
-export const API_CONFIG = {
-  WEATHER_API_KEY: 'your-api-key-here',
-  // ...
-};
-```
-
-### 4. Chạy ứng dụng
-```bash
+npm run cloud:credentials
 npm run dev
 ```
 
-Ứng dụng sẽ chạy tại: `http://localhost:5173`
+Copy `.env.example` thành `.env.local` và điền các biến máy chủ. `cloud-credentials.json` được tạo một lần, chứa ID và hai token ngẫu nhiên; chương trình không ghi đè tệp có sẵn. Chọn Internet để dùng cloud, hoặc Wi-Fi nội bộ để gọi IP trong mạng LAN. Bản Production HTTPS mặc định dùng Internet.
 
----
+Mã cũ `VITE_GEMINI_API_KEY`/`VITE_WEATHER_API_KEY` chỉ được Vite đọc ở máy chủ để hỗ trợ chuyển đổi tại máy; trên Vercel đặt tên mới `GEMINI_API_KEY`/`WEATHER_API_KEY` và Redeploy. Frontend không đưa khóa vào request hay bundle.
 
-## 📖 Hướng dẫn sử dụng
+## API cloud
 
-### Tìm kiếm thời tiết
-1. Nhập tên thành phố (VD: Hanoi, Manila, Bangkok)
-2. Nhấn Enter hoặc click "Tìm kiếm"
-3. Xem thời tiết và cảnh báo
+| Endpoint | Người gọi | Chức năng |
+| --- | --- | --- |
+| `POST /api/device?action=sync&id=...` | ESP32 + deviceToken | Gửi cảm biến/xác nhận; nhận lệnh |
+| `GET /api/device?action=status&id=...` | Web + webToken | Kiểm tra ID và online |
+| `GET /api/device?action=sensors&id=...` | Web + webToken | Đọc số đo mới nhất |
+| `POST /api/device?action=command&id=...` | Web + webToken | Tạo lệnh relay hoặc cấu hình auto |
+| `GET /api/device?action=result&id=...&command=...` | Web + webToken | Đợi xác nhận thực hiện |
+| `POST /api/gemini/v1beta/models/gemini-2.5-flash:generateContent` | Web | Gọi Gemini qua máy chủ |
+| `GET /api/weather?endpoint=weather&q=...` | Web | Thời tiết hiện tại |
+| `GET /api/weather?endpoint=forecast&q=...` | Web | Dự báo |
 
-### Sử dụng Chatbot
-1. Click biểu tượng chat góc dưới phải
-2. Hỏi về canh tác, thời tiết, sâu bệnh...
-3. Nhận tư vấn từ AI
+Token thiết bị được gửi bằng `Authorization: Bearer ...`, không đưa vào URL. Dữ liệu hơn 45 giây không đồng bộ sẽ được coi offline. Lệnh chờ hết hạn sau 35 giây và gắn với phiên khởi động; không thực hiện lại khi thiết bị khởi động lại hoặc kết nối sau thời hạn. Chỉ một lệnh đang chờ trên mỗi thiết bị để tránh ghi đè. Chưa có tài khoản người dùng và lịch sử dài hạn trong bản tạm này.
 
-### Quản lý dữ liệu
-1. Click "Quản lý dữ liệu" ở header
-2. **Thêm cây trồng**: Click "+ Thêm cây"
-3. **Ghi hoạt động**: Click "+ Thêm hoạt động"
-4. **Upload file**: Click "Tải lên file"
-   - JSON: Dữ liệu đã xuất
-   - CSV: Nhật ký hoạt động
-   - TXT: Ghi chú
-5. **Download**: 
-   - JSON: Toàn bộ dữ liệu
-   - CSV: Nhật ký (mở bằng Excel)
+## Kiểm tra
 
----
-
-## 🛠️ Công nghệ sử dụng
-
-- **React 18**: UI framework
-- **Tailwind CSS**: Styling
-- **Lucide React**: Icons
-- **OpenWeatherMap API**: Dữ liệu thời tiết
-- **Gemini AI API**: Chatbot
-- **Window Storage API**: Lưu trữ dữ liệu
-
----
-
-## 📝 Ví dụ file CSV để import
-
-```csv
-activity,date,weather
-Phun thuốc,08/01/2026 14:30,28°C sunny
-Bón phân,07/01/2026 09:00,25°C cloudy
-Tưới nước,06/01/2026 17:00,30°C clear
+```sh
+npm test
+npm run build
 ```
 
----
-
-## 🤝 Đóng góp
-
-Mọi đóng góp đều được hoan nghênh! Vui lòng:
-1. Fork project
-2. Tạo branch mới (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Mở Pull Request
-
----
-
-## 📄 License
-
-MIT License - xem file [LICENSE](LICENSE) để biết thêm chi tiết.
-
----
-
-## 📧 Liên hệ
-
-Nếu có câu hỏi hoặc góp ý, vui lòng tạo issue trên GitHub.
-
----
-
-**Chúc bạn canh tác thuận lợi! 🌾✨**
+Kiểm tra tự động bao gồm hợp đồng dữ liệu cũ, gợi ý AI, lỗi JSON/rỗng, xác nhận cấu hình, token hai vai trò, offline, lệnh hết hạn, reboot và cập nhật đồng thời. Vite dev/preview và Vercel dùng chung API handler. Việc thử cảm biến và bơm qua Internet cần tài khoản cloud đã thiết lập và firmware đã nạp lên board.

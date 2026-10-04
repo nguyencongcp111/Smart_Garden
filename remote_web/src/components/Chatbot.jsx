@@ -1,107 +1,29 @@
-// src/components/Chatbot.jsx
-
 import React from 'react';
-import { MessageCircle, X, Send, Sprout } from 'lucide-react';
-import { SAMPLE_QUESTIONS } from '../constants/constants';
+import { MessageCircle, X, Send, Sprout, Sparkles, Loader2, Check } from 'lucide-react';
 
-const Chatbot = ({ isOpen, onToggle, messages, inputMessage, onInputChange, onSend, loading, chatEndRef }) => {
-  return (
-    <>
-      {/* Chatbot Button */}
-      {!isOpen && (
-        <button
-          onClick={onToggle}
-          className="fixed bottom-6 right-6 w-16 h-16 bg-green-600 text-white rounded-full shadow-2xl hover:bg-green-700 transition flex items-center justify-center z-40"
-        >
-          <MessageCircle className="w-8 h-8" />
-        </button>
-      )}
+const DECISIONS = { applied: 'Đã áp dụng trên ESP32', reviewed: 'Đã mở cấu hình để bạn xem xét', rejected: 'Đã từ chối · Không thay đổi cấu hình', superseded: 'Đã có gợi ý mới hơn' };
 
-      {/* Chatbot Window */}
-      {isOpen && (
-        <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-white rounded-2xl shadow-2xl flex flex-col z-50">
-          {/* Header */}
-          <div className="bg-green-600 text-white p-4 rounded-t-2xl flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sprout className="w-6 h-6" />
-              <div>
-                <div className="font-bold">Trợ lý Nông nghiệp</div>
-                <div className="text-xs text-green-100">Hỏi đáp về canh tác</div>
-              </div>
-            </div>
-            <button onClick={onToggle} className="hover:bg-green-700 rounded-lg p-1">
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((msg, index) => (
-              <div key={index} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] p-3 rounded-2xl ${
-                  msg.role === 'user' 
-                    ? 'bg-green-600 text-white rounded-br-none' 
-                    : 'bg-gray-100 text-gray-800 rounded-bl-none'
-                }`}>
-                  {msg.content}
-                </div>
-              </div>
-            ))}
-            {loading && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 text-gray-800 p-3 rounded-2xl rounded-bl-none">
-                  <div className="flex gap-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.4s'}}></div>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-
-          {/* Sample Questions */}
-          {messages.length === 1 && (
-            <div className="px-4 pb-2 space-y-2">
-              <div className="text-xs text-gray-500 mb-2">Câu hỏi gợi ý:</div>
-              {SAMPLE_QUESTIONS.map((question, index) => (
-                <button
-                  key={index}
-                  onClick={() => onSend(question)}
-                  className="w-full text-left text-sm p-2 bg-green-50 hover:bg-green-100 rounded-lg text-gray-700 transition"
-                >
-                  {question}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Input */}
-          <div className="p-4 border-t">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={inputMessage}
-                onChange={(e) => onInputChange(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && onSend()}
-                placeholder="Nhập câu hỏi..."
-                className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:border-green-500"
-                disabled={loading}
-              />
-              <button
-                onClick={() => onSend()}
-                disabled={loading || !inputMessage.trim()}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:bg-gray-400"
-              >
-                <Send className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-};
-
-export default Chatbot;
+export default function Chatbot({ isOpen, onToggle, messages, inputMessage, onInputChange, onSend, loading, chatEndRef, onRecommendation, contextKey, connected, autoSaving, plantName }) {
+  return <>
+    {!isOpen && <button onClick={onToggle} className="chat-launcher"><MessageCircle size={22} /><span>Trợ lý khu vườn</span><span className="chat-dot" /></button>}
+    {isOpen && <section className="chat-window" role="dialog" aria-label="Trợ lý khu vườn">
+      <header className="chat-header"><span className="chat-avatar"><Sprout size={25} /></span><div><h2>Trợ lý khu vườn</h2><p>{connected ? `Đã nhận cảm biến${plantName.trim() ? ` · ${plantName.trim()}` : ''}` : 'Kết nối ESP32 để nhận gợi ý tưới'}</p></div><button aria-label="Đóng trợ lý" onClick={onToggle}><X size={21} /></button></header>
+      <div className="chat-messages" aria-live="polite">
+        {messages.map((msg) => {
+          const stale = msg.contextKey !== contextKey || !connected;
+          const disabled = stale || autoSaving || loading || !!msg.decision;
+          return <div key={msg.id} className={`chat-message ${msg.role}`}><div className="message-content">{msg.content}</div>
+            {msg.recommendation && <div className="recommendation"><h3><Sparkles size={16} /> Cấu hình gợi ý</h3><div className="recommendation-values"><div><span>Bật tưới ≤</span><strong>{msg.recommendation.startPercent}%</strong></div><div><span>Dừng tưới ≥</span><strong>{msg.recommendation.stopPercent}%</strong></div><div><span>Tối đa</span><strong>{msg.recommendation.durationSec}s</strong></div></div><p className="helper-text">Chế độ tự động: {msg.recommendation.enabled ? 'Bật' : 'Tắt'}</p>
+              {!msg.decision || msg.decision === 'saving' ? <><div className="recommendation-actions"><button className="primary-button" disabled={disabled} onClick={() => onRecommendation(msg, 'applied')}>{msg.decision === 'saving' ? <Loader2 size={15} className="animate-spin" /> : <Check size={15} />}Áp dụng ngay</button><button className="secondary-button" disabled={disabled} onClick={() => onRecommendation(msg, 'reviewed')}>Tôi sẽ xem xét</button><button className="text-button" disabled={autoSaving || loading} onClick={() => onRecommendation(msg, 'rejected')}>Từ chối</button></div>{stale && <p className="helper-text">Kết nối hoặc tên cây đã thay đổi. Hãy yêu cầu gợi ý mới.</p>}</> : <p className="decision-label">{DECISIONS[msg.decision]}</p>}
+              {msg.actionError && <p className="form-error" role="alert">Chưa áp dụng được: {msg.actionError}</p>}
+            </div>}
+          </div>;
+        })}
+        {loading && <div className="chat-thinking" role="status"><Loader2 size={16} className="animate-spin" /> Đang lắng nghe khu vườn...</div>}
+        <div ref={chatEndRef} />
+      </div>
+      <div className="chat-suggestions"><button disabled={loading || autoSaving} onClick={() => onSend('Hãy gợi ý các chỉ số tưới tự động dựa trên cảm biến hiện tại và tên cây của tôi.')}><Sparkles size={14} /> Gợi ý tưới tự động</button></div>
+      <form className="chat-input" onSubmit={(event) => { event.preventDefault(); onSend(); }}><input aria-label="Tin nhắn cho trợ lý" value={inputMessage} onChange={(event) => onInputChange(event.target.value)} placeholder="Hỏi điều gì đó về cây của bạn..." disabled={loading || autoSaving} /><button className="primary-button" aria-label="Gửi tin nhắn" disabled={loading || autoSaving || !inputMessage.trim()}><Send size={18} /></button></form>
+    </section>}
+  </>;
+}

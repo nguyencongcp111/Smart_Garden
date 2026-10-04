@@ -1,0 +1,170 @@
+{
+  "input": "C:\\Users\\LENOVO\\Downloads\\B\u00e1o c\u00e1o BTL m\u00f4n Nh\u00fang - DH13C8 nh\u00f3m 6.docx",
+  "fonts_by_char_count": {
+    "Courier New": 1316
+  },
+  "direct_run_formatting_runs": 359,
+  "direct_paragraph_formatting_paragraphs": 1071,
+  "heading_like_paragraphs_not_heading_style": [
+    {
+      "para_index": 1,
+      "text": "TR\u01af\u1edcNG \u0110\u1ea0I H\u1eccC T\u00c0I NGUY\u00caN V\u00c0 M\u00d4I TR\u01af\u1edcNG H\u00c0 N\u1ed8I",
+      "style": "Normal"
+    },
+    {
+      "para_index": 2,
+      "text": "KHOA C\u00d4NG NGH\u1ec6 TH\u00d4NG TIN",
+      "style": "Normal"
+    },
+    {
+      "para_index": 15,
+      "text": "B\u00c1O C\u00c1O B\u00c0I T\u1eacP L\u1edaN",
+      "style": "Normal"
+    },
+    {
+      "para_index": 17,
+      "text": "H\u1eccC PH\u1ea6N: L\u1eacP TR\u00ccNH H\u1ec6 TH\u1ed0NG NH\u00daNG",
+      "style": "Normal"
+    },
+    {
+      "para_index": 19,
+      "text": "Gi\u1ea3ng vi\u00ean h\u01b0\u1edbng d\u1eabn\t: Nguy\u1ec5n Th\u00e0nh Long",
+      "style": "Normal"
+    },
+    {
+      "para_index": 20,
+      "text": "L\u1edbp            \t\t\t: \u0110H13C8",
+      "style": "Normal"
+    },
+    {
+      "para_index": 24,
+      "text": "H\u00c0 N\u1ed8I \u2013 2025",
+      "style": "Normal"
+    },
+    {
+      "para_index": 25,
+      "text": "TR\u01af\u1edcNG \u0110\u1ea0I H\u1eccC T\u00c0I NGUY\u00caN V\u00c0 M\u00d4I TR\u01af\u1edcNG H\u00c0 N\u1ed8I",
+      "style": "Normal"
+    },
+    {
+      "para_index": 26,
+      "text": "KHOA C\u00d4NG NGH\u1ec6 TH\u00d4NG TIN",
+      "style": "Normal"
+    },
+    {
+      "para_index": 39,
+      "text": "B\u00c1O C\u00c1O B\u00c0I T\u1eacP L\u1edaN",
+      "style": "Normal"
+    },
+    {
+      "para_index": 41,
+      "text": "H\u1eccC PH\u1ea6N: L\u1eacP TR\u00ccNH H\u1ec6 TH\u1ed0NG NH\u00daNG",
+      "style": "Normal"
+    },
+    {
+      "para_index": 43,
+      "text": "Gi\u1ea3ng vi\u00ean h\u01b0\u1edbng d\u1eabn\t: Nguy\u1ec5n Th\u00e0nh Long",
+      "style": "Normal"
+    },
+    {
+      "para_index": 44,
+      "text": "L\u1edbp            \t\t\t: \u0110H13C8",
+      "style": "Normal"
+    },
+    {
+      "para_index": 48,
+      "text": "H\u00c0 N\u1ed8I \u2013 2025",
+      "style": "Normal"
+    },
+    {
+      "para_index": 50,
+      "text": "M\u1ee4C L\u1ee4C",
+      "style": "Normal"
+    },
+    {
+      "para_index": 124,
+      "text": "DANH M\u1ee4C B\u1ea2NG",
+      "style": "Normal"
+    },
+    {
+      "para_index": 198,
+      "text": "Arduino \u2013 N\u1ec1n t\u1ea3ng cho m\u00f4 h\u00ecnh ",
+      "style": "Normal"
+    },
+    {
+      "para_index": 257,
+      "text": "S\u1ed1 l\u1ed7: Kho\u1ea3ng 840 l\u1ed7",
+      "style": "Normal"
+    },
+    {
+      "para_index": 259,
+      "text": "K\u00edch th\u01b0\u1edbc: ~17.2 x 6.5 cm",
+      "style": "Normal"
+    },
+    {
+      "para_index": 575,
+      "text": "Ch\u1ee9c n\u0103ng: \u0110o \u0111\u1ed9 s\u00e1ng m\u00f4i tr\u01b0\u1eddng ",
+      "style": "Normal"
+    }
+  ],
+  "examples": {
+    "direct_paragraph_formatting": [
+      {
+        "para_index": 1,
+        "text": "TR\u01af\u1edcNG \u0110\u1ea0I H\u1eccC T\u00c0I NGUY\u00caN V\u00c0 M\u00d4I TR\u01af\u1edcNG H\u00c0 N\u1ed8I",
+        "style": "Normal"
+      },
+      {
+        "para_index": 2,
+        "text": "KHOA C\u00d4NG NGH\u1ec6 TH\u00d4NG TIN",
+        "style": "Normal"
+      },
+      {
+        "para_index": 3,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 4,
+        "text": "",
+        "style": "Normal"
+      },
+      {
+        "para_index": 5,
+        "text": "",
+        "style": "Normal"
+      }
+    ],
+    "direct_run_formatting": [
+      {
+        "para_index": 1,
+        "run_text": "TR\u01af\u1edcNG \u0110\u1ea0I H\u1eccC T\u00c0I NGUY\u00caN V\u00c0 M\u00d4I TR\u01af\u1edcNG H\u00c0 N\u1ed8I",
+        "style": "Normal"
+      },
+      {
+        "para_index": 2,
+        "run_text": "KHOA",
+        "style": "Normal"
+      },
+      {
+        "para_index": 2,
+        "run_text": " ",
+        "style": "Normal"
+      },
+      {
+        "para_index": 2,
+        "run_text": "C\u00d4NG NGH\u1ec6 TH\u00d4NG TIN",
+        "style": "Normal"
+      },
+      {
+        "para_index": 15,
+        "run_text": "B\u00c1O C\u00c1O B\u00c0I T\u1eacP L\u1edaN",
+        "style": "Normal"
+      }
+    ]
+  },
+  "notes": [
+    "Direct formatting is not always wrong, but it often causes inconsistent output when templates change.",
+    "Heading-like paragraphs not using Heading styles can break TOC and accessibility."
+  ]
+}
